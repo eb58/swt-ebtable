@@ -21,19 +21,19 @@ public class Mx {
       static final public IMatcher CONTAINS = new IMatcher() {
          @Override
          public boolean isMatching(String cellData, String searchText) {
-            return cellData.contains(searchText);
+            return cellData.toLowerCase().contains(searchText.toLowerCase());
          }
       };
       static final public IMatcher STARTSWITH = new IMatcher() {
          @Override
          public boolean isMatching(String cellData, String searchText) {
-            return cellData.startsWith(searchText);
+            return cellData.toLowerCase().startsWith(searchText.toLowerCase());
          }
       };
       static final public IMatcher MATCHES = new IMatcher() {
          @Override
          public boolean isMatching(String cellData, String pattern) {
-            return Pattern.compile(pattern).matcher(cellData).matches();
+            return Pattern.compile(pattern).matcher(cellData.toLowerCase()).matches();
          }
       };
    }

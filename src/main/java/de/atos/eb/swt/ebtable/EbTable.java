@@ -36,93 +36,89 @@ public class EbTable {
 
    private final Composite composite;
    private final Composite compositeCtrl;
+   private final Composite compositeCtrl2;
    private final Composite compositeTable;
    private final EbTableOptions opts;
    private final Mx mx;
    private final Mx.Pager pager;
    private final Listener sortListener;
 
-   private void initControls(final Composite parent) {
-
-      {
-         FillLayout flo = new FillLayout(SWT.HORIZONTAL);
-         flo.spacing=2;
-         Composite navComposite = new Composite(parent, SWT.NONE);
-         navComposite.setLayout(flo);
-
-         Button buttonFirstPage = new Button(navComposite, SWT.PUSH);
-         buttonFirstPage.setText("|<");
-         buttonFirstPage.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent se) {
+   private void createNavigationButton(final Composite parent, final String type) {
+      Button buttonFirstPage = new Button(parent, SWT.PUSH);
+      buttonFirstPage.setText(type);
+      buttonFirstPage.addSelectionListener(new SelectionAdapter() {
+         @Override
+         public void widgetSelected(SelectionEvent se) {
+            if ("|<".equals(type)) {
                pager.gotoPageFirst();
-               initTable(compositeTable);
             }
-         });
-
-         Button buttonPrevPage = new Button(navComposite, SWT.PUSH);
-         buttonPrevPage.setText("<");
-         buttonPrevPage.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent se) {
+            if ("<".equals(type)) {
                pager.gotoPagePrev();
-               initTable(compositeTable);
             }
-         });
-
-         Button buttonNextPage = new Button(navComposite, SWT.PUSH);
-         buttonNextPage.setText(">");
-         buttonNextPage.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent se) {
+            if (">".equals(type)) {
                pager.gotoPageNext();
-               initTable(compositeTable);
             }
-         });
-
-         Button buttonLastPage = new Button(navComposite, SWT.PUSH);
-         buttonLastPage.setText(">|");
-         buttonLastPage.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent se) {
+            if (">|".equals(type)) {
                pager.gotoPageLast();
-               initTable(compositeTable);
             }
-         });
-      }
-
-      {
-         final Combo comboPagelen = new Combo(parent, SWT.READ_ONLY);
-         for (String v : opts.rowsPerPageSelectValues) {
-            comboPagelen.add(v);
+            initTable(compositeTable);
          }
-         //comboPagelen.setLayoutData(new GridData(GridData.BEGINNING, SWT.FILL, true, false));
-         comboPagelen.select(opts.rowsPerPageSelectValues.indexOf("" + opts.rowsPerPage));
-         comboPagelen.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-               System.out.println("Page length now:" + comboPagelen.getText());
-               pager.setSizeOfPage(Integer.parseInt(comboPagelen.getText()));
-               initTable(compositeTable);
-            }
-         });
-      }
+      });
+   }
 
-      {
-         final Label searchtextLabel = new Label(parent, SWT.NONE);
-         searchtextLabel.setText("Filtern:");
-         final Text searchtext = new Text(parent, SWT.BORDER);
-         searchtext.addListener(SWT.Modify, new Listener() {
-            @Override
-            public void handleEvent(Event event) {
-               mx.filterDataInRow(Mx.CommonMatchers.CONTAINS, searchtext.getText());
-               initTable(compositeTable);
-               System.out.println("searchtext changed:" + mx.getFilteredData().size());
-               mx.getPager().dumpInfo();
-            }
-         });
-      }
+   private void initNavigationButtons(final Composite parent) {
 
+      Composite navComposite = new Composite(parent, SWT.NONE);
+      navComposite.setLayoutData(new GridData(GridData.END, SWT.NONE, true, false));
+      FillLayout flo = new FillLayout(SWT.HORIZONTAL);
+      flo.spacing = 2;
+      navComposite.setLayout(flo);
+
+      createNavigationButton(navComposite, "|<");
+      createNavigationButton(navComposite, "<");
+      createNavigationButton(navComposite, ">");
+      createNavigationButton(navComposite, ">|");
+   }
+
+   void initPagelenCombo(final Composite parent) {
+      final Combo comboPagelen = new Combo(parent, SWT.READ_ONLY);
+      for (String v : opts.rowsPerPageSelectValues) {
+         comboPagelen.add(v);
+      }
+      comboPagelen.select(opts.rowsPerPageSelectValues.indexOf("" + opts.rowsPerPage));
+      comboPagelen.addSelectionListener(new SelectionAdapter() {
+         @Override
+         public void widgetSelected(SelectionEvent e) {
+            System.out.println("Page length now:" + comboPagelen.getText());
+            pager.setSizeOfPage(Integer.parseInt(comboPagelen.getText()));
+            initTable(compositeTable);
+         }
+      });
+   }
+
+   void initSearchField(final Composite parent) {
+      final Label searchtextLabel = new Label(parent, SWT.NONE);
+      searchtextLabel.setText("Filtern:");
+      final Text searchtext = new Text(parent, SWT.BORDER);
+      searchtext.addListener(SWT.Modify, new Listener() {
+         @Override
+         public void handleEvent(Event event) {
+            mx.filterDataInRow(Mx.CommonMatchers.CONTAINS, searchtext.getText());
+            initTable(compositeTable);
+            System.out.println("searchtext changed:" + mx.getFilteredData().size());
+            mx.getPager().dumpInfo();
+         }
+      });
+   }
+
+   private void initControlsOverTable(final Composite parent) {
+      initPagelenCombo(parent);
+      initSearchField(parent);
+      initNavigationButtons(parent);
+   }
+
+   private void initControlsUnderTable(final Composite parent) {
+      initNavigationButtons(parent);
    }
 
    private void initTable(Composite parent) {
@@ -194,6 +190,10 @@ public class EbTable {
          compositeTable = new Composite(composite, SWT.BORDER);
          compositeTable.setLayout(new GridLayout());
          compositeTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+         compositeCtrl2 = new Composite(composite, SWT.BORDER);
+         compositeCtrl2.setLayout(new GridLayout(4, false));
+         compositeCtrl2.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 4, 1));
       }
 
       this.opts = opts;
@@ -217,8 +217,9 @@ public class EbTable {
          }
       };
 
-      initControls(compositeCtrl);
+      initControlsOverTable(compositeCtrl);
       initTable(compositeTable);
+      initControlsUnderTable(compositeCtrl2);
 
       composite.pack();
    }
