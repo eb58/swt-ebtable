@@ -33,6 +33,7 @@ class EbTableUtils {
 public class EbTable {
 
    private Table table = null;
+   private Label infoLabel = null;
 
    private final Composite composite;
    private final Composite compositeCtrl;
@@ -40,28 +41,36 @@ public class EbTable {
    private final Composite compositeTable;
    private final EbTableOptions opts;
    private final Mx mx;
-   private final Mx.Pager pager;
    private final Listener sortListener;
 
+   class NavButtonSelectionAdapter extends SelectionAdapter{
+      String type;
+      NavButtonSelectionAdapter(String type){
+         super();
+      }
+      
+      
+   }
    private void createNavigationButton(final Composite parent, final String type) {
-      Button buttonFirstPage = new Button(parent, SWT.PUSH);
-      buttonFirstPage.setText(type);
-      buttonFirstPage.addSelectionListener(new SelectionAdapter() {
+      Button button = new Button(parent, SWT.PUSH);
+      button.setText(type);
+      button.addSelectionListener(new SelectionAdapter() {
          @Override
          public void widgetSelected(SelectionEvent se) {
             if ("|<".equals(type)) {
-               pager.gotoPageFirst();
+               mx.getPager().gotoPageFirst();
             }
             if ("<".equals(type)) {
-               pager.gotoPagePrev();
+               mx.getPager().gotoPagePrev();
             }
             if (">".equals(type)) {
-               pager.gotoPageNext();
+               mx.getPager().gotoPageNext();
             }
             if (">|".equals(type)) {
-               pager.gotoPageLast();
+               mx.getPager().gotoPageLast();
             }
             initTable(compositeTable);
+            setInfoField();
          }
       });
    }
@@ -90,8 +99,9 @@ public class EbTable {
          @Override
          public void widgetSelected(SelectionEvent e) {
             System.out.println("Page length now:" + comboPagelen.getText());
-            pager.setSizeOfPage(Integer.parseInt(comboPagelen.getText()));
+            mx.getPager().setSizeOfPage(Integer.parseInt(comboPagelen.getText()));
             initTable(compositeTable);
+            setInfoField();
          }
       });
    }
@@ -105,10 +115,37 @@ public class EbTable {
          public void handleEvent(Event event) {
             mx.filterDataInRow(Mx.CommonMatchers.CONTAINS, searchtext.getText());
             initTable(compositeTable);
+            setInfoField();
             System.out.println("searchtext changed:" + mx.getFilteredData().size());
             mx.getPager().dumpInfo();
          }
       });
+   }
+
+   void initInfoField(final Composite parent) {
+      infoLabel = new Label(parent, SWT.NONE);
+      setInfoField();
+   }
+
+   void setInfoField() {
+      int curPageNumber = mx.getPager().getCurrentPageNumber();
+      int maxPageNumber = mx.getPager().getMaxPageNumber();
+      int numberOfRows = mx.getFilteredData().size();
+
+      int startRow = Math.min(opts.rowsPerPage * curPageNumber, numberOfRows);
+      int endRow = Math.min(startRow + opts.rowsPerPage, numberOfRows);
+      String filtered
+              = (mx.getOrigData().size() == mx.getFilteredData().size())
+              ? ""
+              : String.format("(%d Einträge insgesamt)", mx.getOrigData().size());
+      //var cntSel = selectionFcts.getSelectedRows().length;
+      //var cntSelected = (!cntSel || !myopts.selectionCol || myopts.selectionCol.singleSelection) ? '' : _.template(util.translate('(<%=len%> ausgew\u00e4hlt)'))({len: cntSel});
+
+      String s = String.format("Seite %d von %d - %d bis %d von %d Zeilen %s",
+              curPageNumber + 1, maxPageNumber, startRow+1, endRow, mx.getFilteredData().size(), filtered);
+      infoLabel.setText(s);
+      infoLabel.pack();
+      //infoLabel.getParent().pack();
    }
 
    private void initControlsOverTable(final Composite parent) {
@@ -118,7 +155,8 @@ public class EbTable {
    }
 
    private void initControlsUnderTable(final Composite parent) {
-      initNavigationButtons(parent);
+      initInfoField(parent);
+      //initNavigationButtons(parent);
    }
 
    private void initTable(Composite parent) {
@@ -149,7 +187,7 @@ public class EbTable {
       }
 
 
-      for (final List<String> rowData : pager.getCurrentPageData()) {
+      for (final List<String> rowData : mx.getPager().getCurrentPageData()) {
          TableItem item = new TableItem(table, SWT.NULL);
          int idx = 0;
          for (final String data : rowData) {
@@ -198,8 +236,7 @@ public class EbTable {
 
       this.opts = opts;
       this.mx = new Mx(data);
-      this.pager = mx.getPager();
-      this.pager.setSizeOfPage(opts.rowsPerPage);
+      mx.getPager().setSizeOfPage(opts.rowsPerPage);
       int col = EbTableUtils.getColumnIndexByName(opts.columns, opts.nameOfColumnAfterWhichToSort);
       this.mx.sortData(col, opts.columns.get(col).isAscending);
 

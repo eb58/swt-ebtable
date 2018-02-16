@@ -110,14 +110,22 @@ public class Mx {
 
    public class Pager {
 
-      private long actPageNumber = 0;
-      private long rowsPerPage = 5;
-      private long maxPageNumber = Math.floorDiv(Math.max(0, processedData.size() - 1), rowsPerPage);
+      private int actPageNumber = 0;
+      private int rowsPerPage = 5;
+      private int maxPageNumber = Math.floorDiv(Math.max(0, processedData.size() - 1), rowsPerPage);
 
       void dumpInfo() {
          System.out.println(String.format("actPageNumber:%d sizeOfPage:%d maxPageNumber:%d", actPageNumber, rowsPerPage, maxPageNumber));
       }
-
+      
+      int getCurrentPageNumber(){
+         return actPageNumber;
+      }
+      
+      int getMaxPageNumber(){
+         return maxPageNumber;
+      }
+      
       void initMaxPageNumber() {
          maxPageNumber = Math.floorDiv(Math.max(0, processedData.size() - 1), rowsPerPage);
          dumpInfo();
@@ -144,7 +152,7 @@ public class Mx {
          return rowsPerPage;
       }
 
-      void setSizeOfPage(long n) {
+      void setSizeOfPage(int n) {
          rowsPerPage = n;
          actPageNumber = 0;
          initMaxPageNumber();
@@ -198,6 +206,10 @@ public class Mx {
 
    public List<List<String>> getFilteredData() {
       return processedData;
+   }
+   
+   public List<List<String>> getOrigData() {
+      return origData;
    }
 
    public Pager getPager() {
